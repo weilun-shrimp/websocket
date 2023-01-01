@@ -1,0 +1,23 @@
+{
+    "name": "weilun/websocket",
+    "description": "base websocket instance",
+    "type": "library",
+    "license": "MIT",
+    "version": "1.0.0",
+    "autoload": {
+        "psr-4": {
+            "Weilun\\WebSocket\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "WeiLun",
+            "email": "gxh0181160809rp@gmail.com"
+        }
+    ],
+    "homepage": "https://github.com/weilun-shrimp/websocket",
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">7.4"
+    }
+}
