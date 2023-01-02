@@ -127,27 +127,27 @@ class Server {
     /**
      * socket_recv flag set 0 - not use any flag --- important
      */
-    protected function run()
-    {
-        while (true) {
-            $data = socket_recv($this->client, $buff, 1000, 0);
-            if ($data === false) {
-                echo 'disconnect' . PHP_EOL;
-                throw new FlowException(__FUNCTION__, socket_strerror(socket_last_error($this->client)));
-                break;
-            }
+    // protected function run()
+    // {
+    //     while (true) {
+    //         $data = socket_recv($this->client, $buff, 1000, 0);
+    //         if ($data === false) {
+    //             echo 'disconnect' . PHP_EOL;
+    //             throw new FlowException(__FUNCTION__, socket_strerror(socket_last_error($this->client)));
+    //             break;
+    //         }
 
-            if ($data) {
-                $client_msg = $this->unseal($buff);
-                echo PHP_EOL . 'client content leng : ' . $data . PHP_EOL;
-                echo 'client content : ' . PHP_EOL . $client_msg . PHP_EOL;
-                var_dump($client_msg);
-                $return = $this->seal('recv : ' . $client_msg);
-                $write = socket_write($this->client, $return, strlen($return));
-                if ($write === false) return throw new FlowException(__FUNCTION__, socket_strerror(socket_last_error($this->client)));
-            }
-        }
-    }
+    //         if ($data) {
+    //             $client_msg = $this->unseal($buff);
+    //             echo PHP_EOL . 'client content leng : ' . $data . PHP_EOL;
+    //             echo 'client content : ' . PHP_EOL . $client_msg . PHP_EOL;
+    //             var_dump($client_msg);
+    //             $return = $this->seal('recv : ' . $client_msg);
+    //             $write = socket_write($this->client, $return, strlen($return));
+    //             if ($write === false) return throw new FlowException(__FUNCTION__, socket_strerror(socket_last_error($this->client)));
+    //         }
+    //     }
+    // }
 
     protected function close(Socket $socket)
     {
@@ -225,20 +225,20 @@ class Server {
         return $number_of_bytes;
     }
 
-    public function start()
-    {
-        try {
-            $this->create();
-            $this->set_options();
-            $this->bind();
-            $this->listen();
-            $this->accept();
-            $this->hand_shake($this->client);
-            $this->run();
-        } catch (FlowException $e) {
-            echo 'ERROR TYPE : ' . $e->getType() . PHP_EOL;
-            echo 'ERROR MSG : ' . $e->getMessage() . PHP_EOL;
-            $this->close($this->master);
-        }
-    }
+    // public function start()
+    // {
+    //     try {
+    //         $this->create();
+    //         $this->set_options();
+    //         $this->bind();
+    //         $this->listen();
+    //         $this->accept();
+    //         $this->hand_shake($this->client);
+    //         $this->run();
+    //     } catch (FlowException $e) {
+    //         echo 'ERROR TYPE : ' . $e->getType() . PHP_EOL;
+    //         echo 'ERROR MSG : ' . $e->getMessage() . PHP_EOL;
+    //         $this->close($this->master);
+    //     }
+    // }
 }
