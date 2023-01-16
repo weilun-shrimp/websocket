@@ -69,7 +69,7 @@ class Server {
 
     /**
      * Reference: https://www.php.net/manual/en/function.socket-accept.php
-     * 
+     *
      * @throws FlowException
      * @return Socket $client instance create by socket_accept
      */
@@ -91,9 +91,9 @@ class Server {
      * Sec-WebSocket-Accept Hashed key reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Sec-WebSocket-Accept
      *
      * @param Socket $client -- create by socket_accept()
-     * 
+     *
      * @throws FlowException
-     * @return bool true means success
+     * @return string $buff - from recv
      */
     protected function hand_shake(Socket $client)
     {
@@ -122,6 +122,7 @@ class Server {
         $write = socket_write($client, $return, strlen($return));
         if ($write === false) return throw new FlowException(__FUNCTION__,  'write error : ' . socket_strerror(socket_last_error($client)));
         echo 'hand shaked' . PHP_EOL;
+        return $buff;
     }
 
     /**
@@ -201,7 +202,7 @@ class Server {
 
     /**
      * Reference : https://www.php.net/manual/en/function.socket-recv.php
-     * 
+     *
      * @throws FlowException
      * @return int number of bytes recv from socket
      */
@@ -214,7 +215,7 @@ class Server {
 
     /**
      * Reference : https://www.php.net/manual/en/function.socket-write.php
-     * 
+     *
      * @throws FlowException
      * @return int number of bytes has writed to socket
      */
