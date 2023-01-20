@@ -82,6 +82,32 @@ class Server {
     }
 
     /**
+     * @throws FlowException - 'method', 'protocol', 'protocol_version' error
+     */
+    protected function decode_hand_shake_header(string $header_buf): array
+    {
+        $exploded = explode("\r\n", $header_buf);
+        $return = [];
+        // method and protocol
+        if (!isset($exploded[0])) throw new FlowException(__FUNCTION__, 'method and protocol not set in params header buf.');
+        $method_and_protocol_exploded = explode('/', $exploded[0]);
+        foreach (['method', 'protocol', 'protocol_version'] as $k => $v) {
+            if (!isset($method_and_protocol_exploded[$k])) throw new FlowException(__FUNCTION__, $v . ' not set in params header buf.');
+            $return[$v] = trim($method_and_protocol_exploded[$k]);
+        }
+        unset($exploded[0]);
+        // else
+        foreach ($exploded as $v) {
+            if (!$v) continue;
+            $colon_pos = strpos($v, ':');
+            $key = substr($v, 0, $colon_pos);
+            $value = trim(substr($v, $colon_pos + 1));
+            $return[$key] = $value;
+        }
+        return $return;
+    }
+
+    /**
      * status must be 101
      * Upgrade: websocket
      * Sec-WebSocket-Version: 13
@@ -89,41 +115,43 @@ class Server {
      * Sec-WebSocket-Accept: **Hashed key**
      *
      * Sec-WebSocket-Accept Hashed key reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Sec-WebSocket-Accept
-     *
+     * @param string $client_key - will be hashed by sha1 with '258EAFA5-E914-47DA-95CA-C5AB0DC85B11' and be encoded by base64
+     * @param string $protocol - will set in Sec-WebSocket-Protocol
+     */
+    protected function generate_hand_shake_header(string $client_key, string $protocol = ''): string
+    {
+        $hashed_key = base64_encode(sha1($client_key . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true));
+        $return = [
+            'HTTP/1.1 101 Switching Protocols',
+            'Upgrade: websocket',
+            'Sec-WebSocket-Version: 13',
+            'Connection: Upgrade',
+            'Sec-WebSocket-Accept: ' . $hashed_key
+        ];
+        if ($protocol) $return[] = 'Sec-WebSocket-Protocol: ' . $protocol;
+        return implode("\r\n", $return) . "\r\n\r\n";
+    }
+
+    /**
+     * biuld your own hand shake function
      * @param Socket $client -- create by socket_accept()
      *
      * @throws FlowException
-     * @return string $buff - from recv
      */
-    protected function hand_shake(Socket $client)
-    {
-        $data = socket_recv($client, $buff, 1000, 0);
-        if ($data === false) return throw new FlowException(__FUNCTION__, 'recv error : ' . socket_strerror(socket_last_error($client)));
-        echo 'hand shake buff : ' . PHP_EOL . $buff . PHP_EOL;
+    // protected function hand_shake(Socket $client): void
+    // {
+    //     $this->recv($client, $buff);
+    //     echo 'hand shake buff : ' . PHP_EOL . $buff . PHP_EOL;
+    //     $decoded_header = $this->decode_hand_shake_header($buff);
+    //     if (!isset($decoded_header['Sec-WebSocket-Key'])) throw new FlowException(__FUNCTION__, 'client key not set in client header.');
+    //     if (!$decoded_header['Sec-WebSocket-Key']) throw new FlowException(__FUNCTION__, 'client key not correct set in client header.');
 
-        $key_pos = strpos($buff, 'Sec-WebSocket-Key:');
-        if ($key_pos === false) return throw new FlowException(__FUNCTION__, 'client key not set in client header.');
-        $key_pos += 18;
+    //     $protocol = isset($decoded_header['Sec-WebSocket-Protocol']) ? $decoded_header['Sec-WebSocket-Protocol'] : '';
+    //     $return_header = $this->generate_hand_shake_header($decoded_header['Sec-WebSocket-Key'], $protocol);
 
-        $temp = substr($buff, $key_pos, strlen($buff));
-        $temp_key_end_pos = strpos($temp, "\r\n");
-        if ($temp_key_end_pos === false) return throw new FlowException(__FUNCTION__, 'client key not correct set in client header. (key end pos)');
-
-        $client_key = trim(substr($temp, 0, $temp_key_end_pos));
-        if (!$client_key) return throw new FlowException(__FUNCTION__, 'client key is empty.');
-
-        $hashed_key = base64_encode(sha1($client_key . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true));
-        $return = "HTTP/1.1 101 Switching Protocols\r\n";
-        $return .= "Upgrade: websocket\r\n";
-        $return .= "Sec-WebSocket-Version: 13\r\n";
-        $return .= "Connection: Upgrade\r\n";
-        $return .= "Sec-WebSocket-Accept: $hashed_key\r\n\r\n";
-
-        $write = socket_write($client, $return, strlen($return));
-        if ($write === false) return throw new FlowException(__FUNCTION__,  'write error : ' . socket_strerror(socket_last_error($client)));
-        echo 'hand shaked' . PHP_EOL;
-        return $buff;
-    }
+    //     $this->write($client, $return_header, strlen($return_header));
+    //     echo 'hand shaked' . PHP_EOL;
+    // }
 
     /**
      * socket_recv flag set 0 - not use any flag --- important
